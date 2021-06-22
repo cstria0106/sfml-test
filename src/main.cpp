@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <thread>
 #include <string>
+#include <cmath>
 
 using namespace sf;
 
@@ -34,6 +35,9 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
+    texture.setRepeated(true);
+    texture.setSmooth(false);
+
     Sprite sprite(texture);
     int x = 0;
     auto texture_size = texture.getSize();
@@ -41,11 +45,23 @@ int main(int argc, char *argv[])
     sprite.setOrigin(Vector2f(texture_size.x / 2, texture_size.y / 2));
     sprite.setPosition(Vector2f(window_size.x / 2, window_size.y / 2));
 
+    auto bulletTexture = Texture();
+    bulletTexture.create(10, 10);
+
+    auto bullet = Sprite(bulletTexture);
+    bullet.setColor(Color::Red);
+
+    double bulletDirection;
+    double bulletX;
+    double bulletY;
+
     Shader shader;
     if (!shader.loadFromFile(get_resource_path("shader.frag"), sf::Shader::Fragment))
     {
         exit(1);
     }
+
+    float time = 0;
 
     while (window.isOpen())
     {
@@ -61,14 +77,15 @@ int main(int argc, char *argv[])
         window.clear(Color::Black);
 
         auto mouse_position = Mouse::getPosition(window);
-        double angle = ((float)mouse_position.y / window_size.y) * 5;
-        if (angle < 0)
-        {
-            angle = 0;
-        }
 
-        sprite.rotate(angle);
-        window.draw(sprite, &shader);
+        auto degree = atan2(mouse_position.y - (double)window_size.y / 2, mouse_position.x - (double)window_size.x / 2);
+
+        sprite.setRotation(degree * 180 / 3.141592);
+        time += 1.0 / 60;
+        shader.setUniform("time", time);
+        window.draw(sprite);
+
+        window.draw(bullet);
 
         window.display();
     }
